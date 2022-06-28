@@ -2,24 +2,18 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:feedme_assignment/bloc/bots/bot_bloc.dart';
 import 'package:feedme_assignment/model/order_item.dart';
 
 part 'order_event.dart';
 part 'order_state.dart';
 
 class OrderBloc extends Bloc<OrderEvent, OrderState> {
-  final BotBloc botBloc;
   late StreamSubscription botSubscription;
-  OrderBloc({required this.botBloc}) : super(OrderState()) {
+  OrderBloc() : super(OrderState()) {
     on<FetchOrderList>(_fetchOrderList);
     on<AddOrder>(_addOrder);
     on<ChangeOrder>(_changeOrder);
 
-    botSubscription = botBloc.stream.listen((state) {
-      print('listening');
-      print(state);
-    });
   }
 
   void _fetchOrderList(FetchOrderList event, Emitter<OrderState> emit) {

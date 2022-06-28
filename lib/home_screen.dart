@@ -113,19 +113,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   deleteBot() {
-    BotDetail newestBot = botList.last;
-    print('this is the newest bot');
-    print(newestBot.id);
-    print(newestBot.queue);
-    print(newestBot.queue.first);
-    setState(() {
-      if (newestBot.queue.isNotEmpty) {
-        orderList
-            .firstWhere((order) => order.id == newestBot.queue.first)
-            .status = OrderStatus.pending;
-      }
-      botList.removeLast();
-    });
+    if (botList.isNotEmpty) {
+      BotDetail newestBot = botList.last;
+      setState(() {
+        if (newestBot.queue.isNotEmpty) {
+          orderList
+              .firstWhere((order) => order.id == newestBot.queue.first)
+              .status = OrderStatus.pending;
+        }
+        botList.removeLast();
+      });
+    }
   }
 
   @override
