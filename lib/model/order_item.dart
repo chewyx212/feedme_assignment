@@ -16,6 +16,18 @@ class OrderItem extends Equatable {
     required this.status,
   });
 
+  OrderItem copyWith({
+    String? id,
+    OrderType? type, // normal or vip
+    OrderStatus? status,
+  }) {
+    return OrderItem(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      status: status ?? this.status,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

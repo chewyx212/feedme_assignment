@@ -18,17 +18,25 @@ class FetchBotList extends BotEvent {
 }
 
 class AddBot extends BotEvent {
-  final BotDetail bot;
-
-  const AddBot({
-    required this.bot,
-  });
+  const AddBot();
   @override
-  List<Object> get props => [bot];
+  List<Object> get props => [];
 }
 
 class DeleteBot extends BotEvent {
-  const DeleteBot();
   @override
   List<Object> get props => [];
+}
+
+class AddOrderToBot extends BotEvent {
+  final String botId;
+  final String orderId;
+
+  const AddOrderToBot({
+    required this.botId,
+    required this.orderId,
+  });
+
+  @override
+  List<Object> get props => [botId, orderId];
 }

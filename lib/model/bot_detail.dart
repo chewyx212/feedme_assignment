@@ -1,17 +1,29 @@
+import 'dart:collection';
+
 import 'package:equatable/equatable.dart';
 
 class BotDetail extends Equatable {
   String id;
-  String? processingOrder;
+  Queue<String> queue;
 
   BotDetail({
     required this.id,
-    this.processingOrder,
+    required this.queue,
   });
+
+  BotDetail copyWith({
+    String? id,
+    Queue<String>? queue,
+  }) {
+    return BotDetail(
+      id: id ?? this.id,
+      queue: queue ?? this.queue,
+    );
+  }
 
   @override
   List<Object?> get props => [
         id,
-        processingOrder,
+        queue,
       ];
 }

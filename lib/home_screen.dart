@@ -1,13 +1,132 @@
 // ignore_for_file: prefer_const_constructors
-
-import 'package:feedme_assignment/bloc/orders/order_bloc.dart';
+import 'dart:async';
+import 'dart:collection';
+import 'package:collection/collection.dart';
+import 'package:feedme_assignment/model/bot_detail.dart';
 import 'package:feedme_assignment/model/order_item.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Timer timer;
+  List<BotDetail> botList = [];
+  List<OrderItem> orderList = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    timer = Timer.periodic(Duration(seconds: 1), (Timer t) => checkOperation());
+  }
+
+  checkOperation() {
+    if (botList.where((bot) => bot.queue.isEmpty).isNotEmpty &&
+        orderList
+            .where((order) => order.status == OrderStatus.pending)
+            .isNotEmpty) {
+      startOperation();
+    }
+  }
+
+  startOperation() {
+    List<BotDetail> availableBotList =
+        botList.where((bot) => bot.queue.isEmpty).toList();
+    List<OrderItem> availableOrderList = orderList
+        .where((order) =>
+            order.type == OrderType.vip && order.status == OrderStatus.pending)
+        .toList();
+    availableOrderList.addAll(orderList
+        .where((order) =>
+            order.type == OrderType.normal &&
+            order.status == OrderStatus.pending)
+        .toList());
+
+    while (availableBotList.isNotEmpty && availableOrderList.isNotEmpty) {
+      setState(() {
+        botList
+            .firstWhere((bot) => bot.id == availableBotList[0].id)
+            .queue
+            .add(availableOrderList[0].id);
+        orderList
+            .firstWhere((order) => order.id == availableOrderList[0].id)
+            .status = OrderStatus.processing;
+      });
+      processOperation(availableBotList[0].id, availableOrderList[0].id);
+
+      availableBotList.removeAt(0);
+      availableOrderList.removeAt(0);
+    }
+  }
+
+  processOperation(String botId, String orderId) {
+    Future.delayed(const Duration(seconds: 10), () {
+      if (botList.firstWhereOrNull((bot) => bot.id == botId) != null &&
+          orderList.firstWhere((order) => order.id == orderId).status ==
+              OrderStatus.processing) {
+        setState(() {
+          botList.firstWhere((bot) => bot.id == botId).queue.removeFirst();
+          orderList.firstWhere((order) => order.id == orderId).status =
+              OrderStatus.completed;
+        });
+      }
+    });
+  }
+
+  addNormal() {
+    setState(() {
+      orderList.add(
+        OrderItem(
+            id: 'N${orderList.length + 1}',
+            type: OrderType.normal,
+            status: OrderStatus.pending),
+      );
+    });
+  }
+
+  addVip() {
+    setState(() {
+      orderList.add(
+        OrderItem(
+          id: 'V${orderList.length + 1}',
+          type: OrderType.vip,
+          status: OrderStatus.pending,
+        ),
+      );
+    });
+  }
+
+  addBot() {
+    setState(() {
+      botList.add(
+        BotDetail(
+          id: '${botList.length + 1}',
+          queue: Queue<String>(),
+        ),
+      );
+    });
+  }
+
+  deleteBot() {
+    BotDetail newestBot = botList.last;
+    print('this is the newest bot');
+    print(newestBot.id);
+    print(newestBot.queue);
+    print(newestBot.queue.first);
+    setState(() {
+      if (newestBot.queue.isNotEmpty) {
+        orderList
+            .firstWhere((order) => order.id == newestBot.queue.first)
+            .status = OrderStatus.pending;
+      }
+      botList.removeLast();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,37 +143,22 @@ class HomeScreen extends StatelessWidget {
             minHeight: MediaQuery.of(context).size.height,
           ),
           child: Column(children: [
-            BlocListener<OrderBloc, OrderState>(
-              listener: (context, state) {},
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.read<OrderBloc>().add(
-                              AddOrder(
-                                type: OrderType.normal,
-                              ),
-                            );
-                      },
-                      child: Text('Add Normal'),
-                    ),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: addNormal,
+                    child: Text('Add Normal'),
                   ),
-                  const SizedBox(width: 10.0),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.read<OrderBloc>().add(
-                              AddOrder(
-                                type: OrderType.vip,
-                              ),
-                            );
-                      },
-                      child: Text('Add VIP'),
-                    ),
+                ),
+                const SizedBox(width: 10.0),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: addVip,
+                    child: Text('Add VIP'),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(
               height: 30.0,
@@ -63,14 +167,14 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: addBot,
                     child: Text('+ Bot'),
                   ),
                 ),
                 const SizedBox(width: 10.0),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: deleteBot,
                     child: Text('- Bot'),
                   ),
                 ),
@@ -79,41 +183,39 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(
               height: 30.0,
             ),
-            BlocBuilder<OrderBloc, OrderState>(
-              builder: (context, state) {
-                return Column(
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Text('Active Bot: 0'),
-                        Text('Processing Bot: 1'),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Text(
-                            'Pending Order: ${state.orderList.where((order) => order.status == OrderStatus.pending).length}'),
-                        Text('Processing Order: 1'),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 30.0,
-                    ),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: state.orderList.length,
-                      itemBuilder: (context, index) {
-                        return Text(
-                            '${state.orderList[index].id} - ${state.orderList[index].status.name}');
-                      },
-                    ),
+                    Text('Active Bot: ${botList.length}'),
+                    Text(
+                        'Processing Bot: ${botList.where((bot) => bot.queue.isNotEmpty).length}'),
                   ],
-                );
-              },
-            ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Text(
+                        'Pending Order: ${orderList.where((order) => order.status == OrderStatus.pending).length}'),
+                    Text(
+                        'Processing Order: ${orderList.where((order) => order.status == OrderStatus.processing).length}'),
+                  ],
+                ),
+                const SizedBox(
+                  height: 30.0,
+                ),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: orderList.length,
+                  itemBuilder: (context, index) {
+                    return Text(
+                        orderList[index].id + orderList[index].status.name);
+                  },
+                ),
+              ],
+            )
           ]),
         ),
       ),

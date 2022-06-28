@@ -18,16 +18,17 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (BuildContext context) => OrderBloc()
-            ..add(
-              const FetchOrderList(),
-            ),
-        ),
-        BlocProvider(
           create: (BuildContext context) => BotBloc()
             ..add(
               const FetchBotList(),
             ),
+        ),
+        BlocProvider(
+          create: (BuildContext context) =>
+              OrderBloc(botBloc: BlocProvider.of<BotBloc>(context))
+                ..add(
+                  const FetchOrderList(),
+                ),
         ),
       ],
       child: MaterialApp(
