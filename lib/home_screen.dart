@@ -4,7 +4,8 @@ import 'package:feedme_assignment/provider/order_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-final orderProvider = ChangeNotifierProvider<OrderProvider>((ref) {
+final orderProvider =
+    StateNotifierProvider<OrderProvider, OrderProviderType>((ref) {
   return OrderProvider();
 });
 
@@ -15,8 +16,8 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // use ref to listen to a provider
     final orderProviderState = ref.watch(orderProvider);
-    final botList = orderProviderState.bots;
-    final orderList = orderProviderState.orders;
+    final botList = orderProviderState.botList;
+    final orderList = orderProviderState.orderList;
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
@@ -35,7 +36,9 @@ class HomeScreen extends ConsumerWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      orderProviderState.addOrder(OrderType.normal);
+                       ref
+                          .read(orderProvider.notifier)
+                          .addOrder(OrderType.normal);
                     },
                     child: Text('Add Normal'),
                   ),
@@ -44,7 +47,8 @@ class HomeScreen extends ConsumerWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      orderProviderState.addOrder(OrderType.vip);
+                      
+                      ref.read(orderProvider.notifier).addOrder(OrderType.vip);
                     },
                     child: Text('Add VIP'),
                   ),
@@ -59,7 +63,8 @@ class HomeScreen extends ConsumerWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      orderProviderState.addBot();
+                      
+                      ref.read(orderProvider.notifier).addBot();
                     },
                     child: Text('+ Bot'),
                   ),
@@ -68,7 +73,8 @@ class HomeScreen extends ConsumerWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      orderProviderState.deleteBot();
+                      
+                      ref.read(orderProvider.notifier).deleteBot();
                     },
                     child: Text('- Bot'),
                   ),
